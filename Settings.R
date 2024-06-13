@@ -9,6 +9,7 @@ source("Function/cf_integral.R")
 source("Function/cf_integral_est.R")
 source("Function/integral_customized.R")
 source("Function/cf_ml_integral_est.R")
+source("Function/cf_ml_integral_est_rateCal.R")
 
 
 # Unmeasured Confounding --------------------------------------------------

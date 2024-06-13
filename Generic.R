@@ -454,6 +454,70 @@ DataFitting.ModelPar.DRIV.cf.hz.ml.est = function(ModelPar){
               Convergence = mod$Convergence))
 }
 
+DataFitting.ModelPar.DRIV.cf.hz.ml.est.rateCal = function(ModelPar){
+  # event = ModelPar$dat$T_D < ModelPar$dat$C & ModelPar$dat$T_D < ModelPar$max_t
+  event = ModelPar$dat$event
+  # T_D_c = ceiling(ModelPar$dat$T_D_c * ModelPar$Control$grid)/ModelPar$Control$grid
+  T_D_c = ModelPar$dat$T_D_c
+  stime = sort(T_D_c)
+  stime = unique(stime)
+  k = length(stime)
+  D_status = matrix(nrow = ModelPar$N, ncol = k)
+  for (i in 1:ModelPar$N) {
+    if(T_D_c[i] > ModelPar$dat$W[i]){
+      D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
+      D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
+    } else {
+      D_status[i, ] = ModelPar$dat$Z[i]
+    }
+  }
+  
+  if(is.null(ModelPar$ml_fitting_surv)) stop("ml_fitting_surv is not specified")
+  if(is.null(ModelPar$ml_fitting_propensity)) stop("ml_fitting_propensity is not specified")
+  if(is.null(ModelPar$nfolds)) ModelPar$nfolds = 10
+  if(is.null(ModelPar$seed)) ModelPar$seed = 5884419
+  
+  if(!("Covariates2" %in% names(ModelPar))){
+    args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE],
+                            ml_fitting_surv = ModelPar$ml_fitting_surv,
+                            ml_fitting_propensity = ModelPar$ml_fitting_propensity,
+                            ml_fitting_surv_true = ModelPar$ml_fitting_surv_true,
+                            ml_fitting_propensity_true = ModelPar$ml_fitting_propensity_true,
+                            rate = ModelPar$rate,
+                            Covariates2 = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE], 
+                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
+  }else{
+    args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE], 
+                            ml_fitting_surv = ModelPar$ml_fitting_surv,
+                            ml_fitting_propensity = ModelPar$ml_fitting_propensity,
+                            ml_fitting_surv_true = ModelPar$ml_fitting_surv_true,
+                            ml_fitting_propensity_true = ModelPar$ml_fitting_propensity_true,
+                            rate = ModelPar$rate,
+                            Covariates2 = ModelPar$Covariates2, 
+                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
+  }
+  mod = easy_call(cfhaz_ml_integral_est_cpp_rateCal, args)
+  Coef = NULL
+  Var = NULL
+  Convergence = NULL
+  mse_propensity = NULL
+  mse_surv = NULL
+  for(i in 1:length(ModelPar$rate)^2) {
+    Coef = c(Coef, mod[[i]]$x)
+    Var = c(Var, mod[[i]]$var)
+    Convergence = c(Convergence, mod[[i]]$Convergence)
+    mse_propensity = c(mse_propensity, mod[[i]]$mse_propensity)
+    mse_surv = c(mse_surv, mod[[i]]$mse_surv)
+  }
+  return(list(Coef = Coef,
+              Var = Var,
+              Convergence = Convergence,
+              mse_propensity = mse_propensity,
+              mse_surv = mse_surv))
+}
+
 
 DataFitting.ModelPar.remove.control = function(ModelPar){
   # event = ModelPar$dat$T_D < ModelPar$dat$C & ModelPar$dat$T_D < ModelPar$max_t
