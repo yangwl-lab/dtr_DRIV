@@ -60,7 +60,7 @@ SimuRun_rateCal = function(SimuArg, methods = "DRIV.cf.hz.ml.est.rateCal", rate,
                                   max_iter = 20, 
                                   tol = 1e-5, 
                                   contraction = 0.5, 
-                                  eta = 1e-4), ...){
+                                  eta = 1e-4), sequence,...){
   Validate_method(methods)
   args = rlang::dots_list(N = SimuArg$initials$N,
                           p = SimuArg$initials$p,
@@ -90,7 +90,7 @@ SimuRun_rateCal = function(SimuArg, methods = "DRIV.cf.hz.ml.est.rateCal", rate,
     }
     out[[kk]] = templist
   }
-  for (i in 1:SimuArg$initials$nrep) {
+  for (i in sequence) {
     data = jsonlite::read_json(paste0(SimuArg$Control$save_path, 
                                       "DataGenerated/",
                                       SimuArg$initials$N,

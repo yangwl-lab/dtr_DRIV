@@ -150,10 +150,10 @@ SEXP integral_customized_est(
     
     pk = -fn/Hessian;
     new_parameters = init_parameters + pk;
-    fn_abs = abs(fn);
+    fn_abs = fabs(fn);
     // arma::arma_print(fn_abs);
     // arma::arma_print(arma::sum(fn_abs));
-    diff = abs(new_parameters - init_parameters);
+    diff = fabs(new_parameters - init_parameters);
     if(fn_abs < tol || diff < (tol * tol))
     {
       step = iter;

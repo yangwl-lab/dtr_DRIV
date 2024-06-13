@@ -16,7 +16,7 @@ SimuArg = New_SimuArg(nrep = 100, N = 1600, p = 2, p_U = 1, Scenario = "exogenou
                       alpha = rep(0.25, 3),
                       beta = rep(0.25, 3),
                       diffcoef = 0.5)
-# DataGenerating(SimuArg)
+DataGenerating(SimuArg)
 
 
 SimuArg_dep = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 3,
@@ -36,7 +36,7 @@ SimuArg_dep = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exo
 # DataGenerating(SimuArg_dep)
 
 
-SimuArg_KangSchafer = New_SimuArg(nrep = 100, N = 1600, p = 1, p_U = 1, Scenario = "exogenous", max_t = 0.8,
+SimuArg_KangSchafer = New_SimuArg(nrep = 1000, N = 1600, p = 1, p_U = 1, Scenario = "exogenous", max_t = 0.8,
                           theta = 0.5, 
                           unmeasured_Confounding = unmeasured_Confounding,
                           InitCovariates = InitCovariates,
@@ -161,9 +161,9 @@ ml_fitting_propensity_logit = function(data, predictx){
   return(expit(predict(mod, newdata = predictx)))
 }
 
-# trial = SimuRun(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est", "DRIV.s"),
-#         ml_fitting_surv = ml_fitting_rfsrc,
-#         ml_fitting_propensity = ml_fitting_propensity_logit)
+trial = SimuRun(SimuArg, methods = c("DRIV.cf.hz.est"),
+        ml_fitting_surv = ml_fitting_rfsrc,
+        ml_fitting_propensity = ml_fitting_propensity_logit)
 
 
 
@@ -172,4 +172,36 @@ trial = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rate
                         ml_fitting_surv = ml_fitting_rfsrc2,
                         ml_fitting_propensity = ml_fitting_propensity_logit,
                         ml_fitting_surv_true = ml_fitting_surv_true,
-                        ml_fitting_propensity_true = ml_fitting_propensity_true)
+                        ml_fitting_propensity_true = ml_fitting_propensity_true, 
+                        sequence = 1:10)
+
+trial2 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
+                        rate = seq(0, 1, by = 0.2),
+                        ml_fitting_surv = ml_fitting_rfsrc2,
+                        ml_fitting_propensity = ml_fitting_propensity_logit,
+                        ml_fitting_surv_true = ml_fitting_surv_true,
+                        ml_fitting_propensity_true = ml_fitting_propensity_true, 
+                        sequence = 10:20)
+
+trial3 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
+                         rate = seq(0, 1, by = 0.2),
+                         ml_fitting_surv = ml_fitting_rfsrc2,
+                         ml_fitting_propensity = ml_fitting_propensity_logit,
+                         ml_fitting_surv_true = ml_fitting_surv_true,
+                         ml_fitting_propensity_true = ml_fitting_propensity_true, 
+                         sequence = 20:30)
+
+trial4 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
+                         rate = seq(0, 1, by = 0.2),
+                         ml_fitting_surv = ml_fitting_rfsrc2,
+                         ml_fitting_propensity = ml_fitting_propensity_logit,
+                         ml_fitting_surv_true = ml_fitting_surv_true,
+                         ml_fitting_propensity_true = ml_fitting_propensity_true, 
+                         sequence = 30:40)
+trial5 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
+                         rate = seq(0, 1, by = 0.2),
+                         ml_fitting_surv = ml_fitting_rfsrc2,
+                         ml_fitting_propensity = ml_fitting_propensity_logit,
+                         ml_fitting_surv_true = ml_fitting_surv_true,
+                         ml_fitting_propensity_true = ml_fitting_propensity_true, 
+                         sequence = 40:50)
