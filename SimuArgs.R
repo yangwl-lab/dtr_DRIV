@@ -1,9 +1,9 @@
 source("Settings.R")
-# library(LongCART)
+library(LongCART)
 library(randomForestSRC)
 
 
-SimuArg = New_SimuArg(nrep = 100, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 3,
+SimuArg = New_SimuArg(nrep = 100, N = 6400, p = 2, p_U = 1, Scenario = "exogenous", max_t = 3,
                       theta = 0.1, 
                       unmeasured_Confounding = unmeasured_Confounding,
                       InitCovariates = InitCovariates,
@@ -110,9 +110,10 @@ ml_fitting_surv_true = function(Covariates, stime) {
   L = Covariates
   L = cbind(exp(L[, 1]/2))
   L = ifelse(L[, 1] > exp(0.25), exp(3) - L[, 1], 0.25 * L[, 1])
-  m = matrix((2.35 + 0.274 * abs(Covariates[, 1]) + 0.0685), nrow = nrow(Covariates), 
-             ncol = length(stime), byrow = FALSE)
-  m2 = t(apply(m, 1, function(d) return(d*stime)))
+  # m = matrix((2.35 + 0.274 * abs(Covariates[, 1]) + 0.0685), nrow = nrow(Covariates), 
+  #            ncol = length(stime), byrow = FALSE)
+  m = (2.35 + 0.274 * abs(Covariates[, 1]) + 0.0685) %*% t(c(0, diff(stime)))
+  m2 = t(apply(m, 1, cumsum))
   return(list(surv = m,
               cumsurv = m2))
 }
@@ -167,13 +168,13 @@ trial = SimuRun(SimuArg, methods = c("DRIV.cf.hz.est"),
 
 
 
-trial = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
+trial1 = SimuRun_rateCal(SimuArg, methods = c("DRIV.cf.hz.ml.est.rateCal"),
                         rate = seq(0, 1, by = 0.2),
                         ml_fitting_surv = ml_fitting_rfsrc2,
-                        ml_fitting_propensity = ml_fitting_propensity_logit,
+                        ml_fitting_propensity = ml_fitting_propensity,
                         ml_fitting_surv_true = ml_fitting_surv_true,
                         ml_fitting_propensity_true = ml_fitting_propensity_true, 
-                        sequence = 1:10)
+                        sequence = 1:2, true_theta = 0.1)
 
 trial2 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
                         rate = seq(0, 1, by = 0.2),

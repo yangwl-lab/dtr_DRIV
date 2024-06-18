@@ -21,7 +21,7 @@ cfhaz_ml_integral_est_cpp_rateCal = function(init_parameters, time, event, IV,
                                      ml_fitting_propensity_true,
                                      max_iter = 20, tol = 1e-5,
                                      contraction = 0.5, eta = 1e-4, nfolds = 10, seed = 5884419, 
-                                     rate)
+                                     rate, true_theta)
 {
   N = length(time)
   # b_Covariates = sapply(BasisFun, function(d) return(d(Covariates)))
@@ -32,6 +32,7 @@ cfhaz_ml_integral_est_cpp_rateCal = function(init_parameters, time, event, IV,
   cf_cumsurv = matrix(0, nrow = N, ncol = length(stime))
   # ind_control = apply(D_status, 1, function(d) return(all(d == 0)))
   for (i in 1:length(cflist)) {
+    cat("cv", i, "\n")
     ind = cflist[[i]]
     tmp_df = data.frame(IV = IV[-ind], Covariates2[-ind, , drop = FALSE])
     pred_df = data.frame(IV = IV[ind], Covariates2[ind, , drop = FALSE])
@@ -67,8 +68,14 @@ cfhaz_ml_integral_est_cpp_rateCal = function(init_parameters, time, event, IV,
   cf_cumsurv_true = mod2_true$cumsurv
   out = list()
   k = 1
+  
+  int_D = t(apply(D_status, 1, function(d) return(cumsum(d*c(0, diff(stime))))))
+  Y_t = sapply(stime, function(d) ifelse(time >= d, 1, 0))
+  tmp_int = exp(int_D*true_theta)*Y_t
+  
   for (j in 1:length(rate)) {
     for (jj in 1:length(rate)) {
+      cat("comb", j, jj, "\n")
       cf_surv_input = cf_surv*rate[j] + cf_surv_true*(1 - rate[j])
       cf_cumsurv_input = cf_cumsurv*rate[j] + cf_cumsurv_true*(1 - rate[j])
       cf_IV_c_input = cf_IV_c*rate[jj] + cf_IV_c_true*(1 - rate[jj])
@@ -77,7 +84,8 @@ cfhaz_ml_integral_est_cpp_rateCal = function(init_parameters, time, event, IV,
                                          ConfoundingPart = cf_surv_input, max_iter = max_iter,
                                          tol = tol, contraction = contraction, eta = eta)
       out[[k]]$mse_propensity = mean((cf_IV_c_input - cf_IV_c_true)^2)
-      out[[k]]$mse_surv = mean(apply(cf_cumsurv_input - cf_cumsurv_true, 1, function(d) return(max(d^2))))
+      Lam = matrix(out[[k]]$Lam[, 1], nrow = N, ncol = length(stime), byrow = TRUE)
+      out[[k]]$mse_surv = mean(apply(tmp_int*(cf_surv_input  - cf_surv_true), 1, function(d) return(sum(d)))^2)
       k = k + 1
     }
   }

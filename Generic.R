@@ -485,6 +485,7 @@ DataFitting.ModelPar.DRIV.cf.hz.ml.est.rateCal = function(ModelPar){
                             ml_fitting_surv_true = ModelPar$ml_fitting_surv_true,
                             ml_fitting_propensity_true = ModelPar$ml_fitting_propensity_true,
                             rate = ModelPar$rate,
+                            true_theta = ModelPar$true_theta,
                             Covariates2 = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE], 
                             D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
   }else{
@@ -495,6 +496,7 @@ DataFitting.ModelPar.DRIV.cf.hz.ml.est.rateCal = function(ModelPar){
                             ml_fitting_surv_true = ModelPar$ml_fitting_surv_true,
                             ml_fitting_propensity_true = ModelPar$ml_fitting_propensity_true,
                             rate = ModelPar$rate,
+                            true_theta = ModelPar$true_theta,
                             Covariates2 = ModelPar$Covariates2, 
                             D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
   }

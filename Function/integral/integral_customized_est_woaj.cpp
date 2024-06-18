@@ -5,7 +5,7 @@ using namespace Rcpp;
 
 
 // [[Rcpp::export]]
-SEXP integral_customized_est(
+SEXP integral_customized_est_woaj(
     double init_parameters,
     arma::vec time,
     arma::vec event,
@@ -27,7 +27,7 @@ SEXP integral_customized_est(
   double betaD, Asyvar, hatsigma, hatphi, ave_hatsigma, fn, pk, new_parameters, diff, fn_abs, Hessian;
   int step = 0;
   bool Convergence;
-  arma::vec hatsigma_v(n), res(n), SY(k), dSY(k), dLam_dbetaD(k), dLam(k), dPhi(n);
+  arma::vec hatsigma_v(n), res(n), SY(k), dSY(k), dPhi(n);
   arma::mat int_D(n, k), dNt(n, k), Yt(n, k), K(n, k), int_expbetaD(n, k), int_dexpbetaD(n, k);
   // double H_com_val, bktrkg;
   
@@ -65,29 +65,6 @@ SEXP integral_customized_est(
     }
     // arma::arma_print(SY);
     // printf("dd\n");
-    
-    dLam.zeros();
-    dLam_dbetaD.zeros();
-    for (int i = 0; i < n; i++)
-    {
-      for (int j = 0; j < k; j++)
-      {
-        if (j == 0)
-        {
-          dLam[j] = dLam[j] + Yt(i, j) * exp(int_D(i, j) * betaD) * (dNt(i, j) - D_status(i, j)*betaD*stime[j] - ConfoundingPart(i, j))/ SY[j];
-          dLam_dbetaD[j] = dLam_dbetaD[j]+Yt(i, j)*int_D(i, j)*exp(int_D(i, j)*betaD)*(dNt(i,j) - (D_status(i,j)*betaD)*stime[j]- ConfoundingPart(i, j))/SY[j] - 
-            Yt(i, j)*exp(int_D(i, j)*betaD)*D_status(i,j)*stime[j]/SY[j] - 
-            dSY[j]*Yt(i, j) * exp(int_D(i, j) * betaD) * (dNt(i, j) - D_status(i, j)*betaD*stime[j] - ConfoundingPart(i, j))/ (SY[j] * SY[j]);
-        } else
-        {
-          dLam[j] = dLam[j] + Yt(i, j) * exp(int_D(i, j) * betaD) * (dNt(i, j) - D_status(i, j)*betaD*(stime[j] - stime[j-1]) -
-            ConfoundingPart(i, j))/ SY[j];
-          dLam_dbetaD[j] = dLam_dbetaD[j]+Yt(i, j)*int_D(i, j)*exp(int_D(i, j)*betaD)*(dNt(i,j) - (D_status(i,j)*betaD)*(stime[j] - stime[j-1]) - ConfoundingPart(i, j))/SY[j] - 
-            Yt(i, j)*exp(int_D(i, j)*betaD)*D_status(i,j)*(stime[j] - stime[j-1])/SY[j] - 
-            dSY[j]*Yt(i, j) * exp(int_D(i, j) * betaD) * (dNt(i, j) - D_status(i, j)*betaD*(stime[j] - stime[j-1])- ConfoundingPart(i, j))/ (SY[j] * SY[j]);
-        }
-      }
-    }
     // printf("2\n");
     
     
@@ -108,9 +85,8 @@ SEXP integral_customized_est(
             int_expbetaD(i, j) = stime[j];
             int_dexpbetaD(i, j) = int_D(i, j) * int_D(i, j) / 2;
           }
-          res[i] = res[i] + exp(int_D(i, j) * betaD) * (dNt(i, j)- Yt(i, j) * (dLam[j] + ConfoundingPart(i, j))) - int_expbetaD(i, j) * (IV[i] * betaD);
-          dPhi[i] = dPhi[i] + (dNt(i, j) - Yt(i, j) * (dLam[j] + ConfoundingPart(i, j))) * int_D(i, j) * exp(betaD * int_D(i, j)) -
-            exp(betaD*int_D(i,j))*Yt(i,j)*dLam_dbetaD[j]-
+          res[i] = res[i] + exp(int_D(i, j) * betaD) * (dNt(i, j)- Yt(i, j) * (ConfoundingPart(i, j)*stime[j])) - int_expbetaD(i, j) * (IV[i] * betaD);
+          dPhi[i] = dPhi[i] + (dNt(i, j) - Yt(i, j) * (ConfoundingPart(i, j)*stime[j])) * int_D(i, j) * exp(betaD * int_D(i, j)) -
             int_dexpbetaD(i, j) * (IV[j] * betaD) -
             int_expbetaD(i, j) * IV[j];
         }
@@ -127,9 +103,8 @@ SEXP integral_customized_est(
             int_dexpbetaD(i, j) = (stime[j] - stime[j-1]) * int_D(i, j-1) + D_status(i, j-1) * (stime[j] - stime[j-1]) * (stime[j] - stime[j-1])/2;
             
           }
-          res[i] = res[i] + exp(int_D(i, j) * betaD) * (dNt(i, j) - Yt(i, j)*(dLam[j]+ConfoundingPart(i, j))) - Yt(i, j-1) * int_expbetaD(i, j) * (D_status(i, j-1) * betaD);
-          dPhi[i] = dPhi[i] + (dNt(i, j) - Yt(i, j) * (dLam[j]+ConfoundingPart(i, j))) * int_D(i, j) * exp(betaD * int_D(i, j)) -
-            exp(betaD*int_D(i,j))*Yt(i,j)*dLam_dbetaD[j]-
+          res[i] = res[i] + exp(int_D(i, j) * betaD) * (dNt(i, j) - Yt(i, j)*(ConfoundingPart(i, j)*(stime[j] - stime[j-1]))) - Yt(i, j-1) * int_expbetaD(i, j) * (D_status(i, j-1) * betaD);
+          dPhi[i] = dPhi[i] + (dNt(i, j) - Yt(i, j) * (ConfoundingPart(i, j)*(stime[j] - stime[j-1]))) * int_D(i, j) * exp(betaD * int_D(i, j)) -
             Yt(i, j-1) * int_dexpbetaD(i, j) * (D_status(i, j-1) * betaD) -
             Yt(i, j-1) * int_expbetaD(i, j) * D_status(i, j-1);
         }
@@ -226,11 +201,11 @@ SEXP integral_customized_est(
     {
       if (j == 0)
       {
-        ave_hatsigma = ave_hatsigma + (IV_c[i]*exp(int_D(i, j) * betaD) *(dNt(i, j) - Yt(i, j) * (dLam[j] + ConfoundingPart(i, j))) - 
+        ave_hatsigma = ave_hatsigma + (IV_c[i]*exp(int_D(i, j) * betaD) *(dNt(i, j) - Yt(i, j) * (ConfoundingPart(i, j)*stime[j])) - 
           IV_c[i] * int_expbetaD(i, j)* 1*(betaD* IV[i]))/n;
       } else
       {
-        ave_hatsigma = ave_hatsigma + (IV_c[i]*exp(int_D(i, j) * betaD) *(dNt(i, j)- Yt(i, j) * (dLam[j] + ConfoundingPart(i, j))) - 
+        ave_hatsigma = ave_hatsigma + (IV_c[i]*exp(int_D(i, j) * betaD) *(dNt(i, j)- Yt(i, j) * (ConfoundingPart(i, j)*(stime[j] - stime[j-1]))) - 
           IV_c[i] * int_expbetaD(i, j)* Yt(i, j-1)*(betaD*D_status(i, j-1)))/n;
       }
     }
@@ -245,16 +220,16 @@ SEXP integral_customized_est(
       
       if(j==0)
       {
-        hatsigma_v[i] = hatsigma_v[i] + (IV_c[i]*exp(int_D(i, j) * betaD) *(dNt(i, j)- Yt(i, j) * (dLam[j] + ConfoundingPart(i, j))) - 
+        hatsigma_v[i] = hatsigma_v[i] + (IV_c[i]*exp(int_D(i, j) * betaD) *(dNt(i, j)- Yt(i, j) * (ConfoundingPart(i, j)*stime[j])) - 
           IV_c[i] * int_expbetaD(i, j)* 1*(betaD*IV[i]));
-        hatphi = hatphi + (IV_c[i] * int_D(i, j)* exp(int_D(i,j)*betaD)*(dNt(i, j) - Yt(i, j)*(dLam[j] + ConfoundingPart(i, j))) -
+        hatphi = hatphi + (IV_c[i] * int_D(i, j)* exp(int_D(i,j)*betaD)*(dNt(i, j) - Yt(i, j)*(ConfoundingPart(i, j)*stime[j])) -
           IV_c[i] * int_dexpbetaD(i, j)*1*(betaD*IV[i]) -
           IV_c[i] * int_expbetaD(i, j)*1*IV[i]);
       } else 
       {
-        hatsigma_v[i] = hatsigma_v[i] + IV_c[i]*exp(int_D(i, j) * betaD) *(dNt(i, j)- Yt(i, j) * (dLam[j] + ConfoundingPart(i, j))) - 
+        hatsigma_v[i] = hatsigma_v[i] + IV_c[i]*exp(int_D(i, j) * betaD) *(dNt(i, j)- Yt(i, j) * (ConfoundingPart(i, j)*(stime[j] - stime[j-1]))) - 
           IV_c[i] * int_expbetaD(i, j)* Yt(i, j-1)*(betaD*D_status(i, j-1));
-        hatphi = hatphi + (IV_c[i] * int_D(i, j)* exp(int_D(i,j)*betaD)*(dNt(i, j)- Yt(i, j)*(dLam[j] + ConfoundingPart(i, j))) -
+        hatphi = hatphi + (IV_c[i] * int_D(i, j)* exp(int_D(i,j)*betaD)*(dNt(i, j)- Yt(i, j)*(ConfoundingPart(i, j)*(stime[j] - stime[j-1]))) -
           IV_c[i] * int_dexpbetaD(i, j)*Yt(i, j-1)*(betaD*D_status(i, j-1)) -
           IV_c[i] * int_expbetaD(i, j)*Yt(i, j-1)*D_status(i, j-1));
       }
@@ -270,7 +245,6 @@ SEXP integral_customized_est(
     Named("x") = init_parameters,
     Named("Convergence") = Convergence,
     Named("iter") = step,
-    Named("var") = Asyvar,
-    Named("Lam") = dLam
+    Named("var") = Asyvar
   );
 }
