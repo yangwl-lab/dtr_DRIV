@@ -57,7 +57,7 @@ SimuRun = function(SimuArg, methods,
 }
 
 
-SimuRun_rateCal = function(SimuArg, methods = "DRIV.cf.hz.ml.est.rateCal", rate,
+SimuRun_rateCal = function(SimuArg, methods = "DRIV.cf.hz.ml.est.rateCal",
                    Control = list(grid = 100, 
                                   max_iter = 20, 
                                   tol = 1e-5, 
@@ -66,9 +66,10 @@ SimuRun_rateCal = function(SimuArg, methods = "DRIV.cf.hz.ml.est.rateCal", rate,
   Validate_method(methods)
   args = rlang::dots_list(N = SimuArg$initials$N,
                           p = SimuArg$initials$p,
-                          rate = rate,
                           max_t = SimuArg$initials$max_t,
                           Control = Control, !!!list(...), .homonyms = "first")
+  rate_propensity = args$rate_propensity
+  rate_hazard = args$rate_hazard
   # attach out to SimuArg, then construct summary.SimuArg
   out = vector("list", length(methods)) 
   names(out) = methods
@@ -83,11 +84,13 @@ SimuRun_rateCal = function(SimuArg, methods = "DRIV.cf.hz.ml.est.rateCal", rate,
     }
     
     if(kk %in% c("DRIV.cf.hz.ml.est.rateCal")){
-      out[[kk]] = list(Coef = matrix(0, nrow = length(rate)^2, ncol = SimuArg$initials$nrep),
-                       Var = matrix(0, nrow = length(rate)^2, ncol = SimuArg$initials$nrep),
-                       Convergence = matrix(FALSE, nrow = length(rate)^2, ncol = SimuArg$initials$nrep),
-                       mse_propensity = matrix(0, nrow = length(rate)^2, ncol = SimuArg$initials$nrep),
-                       mse_surv = matrix(0, nrow = length(rate)^2, ncol = SimuArg$initials$nrep))
+      out[[kk]] = list(Coef = matrix(0, nrow = nrow(rate_propensity)*ncol(rate_hazard), ncol = SimuArg$initials$nrep),
+                       Var = matrix(0, nrow = nrow(rate_propensity)*ncol(rate_hazard), ncol = SimuArg$initials$nrep),
+                       Convergence = matrix(FALSE, nrow = nrow(rate_propensity)*ncol(rate_hazard), ncol = SimuArg$initials$nrep),
+                       mse_propensity = matrix(0, nrow = nrow(rate_propensity)*ncol(rate_hazard), ncol = SimuArg$initials$nrep),
+                       mse_surv = matrix(0, nrow = nrow(rate_propensity)*ncol(rate_hazard), ncol = SimuArg$initials$nrep),
+                       rate_hazard = matrix(0, nrow = nrow(rate_propensity)*ncol(rate_hazard), ncol = SimuArg$initials$nrep),
+                       rate_propensity = matrix(0, nrow = nrow(rate_propensity)*ncol(rate_hazard), ncol = SimuArg$initials$nrep))
       next
     }
     out[[kk]] = templist
@@ -121,6 +124,9 @@ SimuRun_rateCal = function(SimuArg, methods = "DRIV.cf.hz.ml.est.rateCal", rate,
         out[[kk]]$Convergence[, i] = mod$Convergence
         out[[kk]]$mse_propensity[, i] = mod$mse_propensity
         out[[kk]]$mse_surv[, i] = mod$mse_surv
+        # browser()
+        out[[kk]]$rate_hazard[, i] = mod$rate_hazard
+        out[[kk]]$rate_propensity[, i] = mod$rate_propensity
         cat("\t", out[[kk]]$Var[, i], "\n")
         cat("\t", out[[kk]]$Convergence[, i], "\n")
         next

@@ -484,7 +484,10 @@ DataFitting.ModelPar.DRIV.cf.hz.ml.est.rateCal = function(ModelPar){
                             ml_fitting_propensity = ModelPar$ml_fitting_propensity,
                             ml_fitting_surv_true = ModelPar$ml_fitting_surv_true,
                             ml_fitting_propensity_true = ModelPar$ml_fitting_propensity_true,
-                            rate = ModelPar$rate,
+                            rate_propensity = ModelPar$rate_propensity , 
+                            rate_hazard = ModelPar$rate_hazard, 
+                            target_biases_hazard = ModelPar$target_biases_hazard,
+                            target_biases_prop = ModelPar$target_biases_prop, learning_rate = ModelPar$learning_rate,
                             true_theta = ModelPar$true_theta,
                             Covariates2 = ModelPar$dat$Covariates, 
                             D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
@@ -495,29 +498,42 @@ DataFitting.ModelPar.DRIV.cf.hz.ml.est.rateCal = function(ModelPar){
                             ml_fitting_propensity = ModelPar$ml_fitting_propensity,
                             ml_fitting_surv_true = ModelPar$ml_fitting_surv_true,
                             ml_fitting_propensity_true = ModelPar$ml_fitting_propensity_true,
-                            rate = ModelPar$rate,
+                            rate_propensity = ModelPar$rate_propensity , 
+                            rate_hazard = ModelPar$rate_hazard, 
+                            target_biases_hazard = ModelPar$target_biases_hazard,
+                            target_biases_prop = ModelPar$target_biases_prop, learning_rate = ModelPar$learning_rate,
                             true_theta = ModelPar$true_theta,
                             Covariates2 = ModelPar$Covariates2, 
                             D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
   }
   mod = easy_call(cfhaz_ml_integral_est_cpp_rateCal, args)
-  Coef = NULL
-  Var = NULL
-  Convergence = NULL
-  mse_propensity = NULL
-  mse_surv = NULL
-  for(i in 1:length(ModelPar$rate)^2) {
-    Coef = c(Coef, mod[[i]]$x)
-    Var = c(Var, mod[[i]]$var)
-    Convergence = c(Convergence, mod[[i]]$Convergence)
-    mse_propensity = c(mse_propensity, mod[[i]]$mse_propensity)
-    mse_surv = c(mse_surv, mod[[i]]$mse_surv)
-  }
+  # Coef = NULL
+  # Var = NULL
+  # Convergence = NULL
+  # mse_propensity = NULL
+  # mse_surv = NULL
+  # for(i in 1:(ncol(ModelPar$rate_hazard)*nrow(ModelPar$rate_propensity))) {
+  #   Coef = c(Coef, mod[[i]]$x)
+  #   Var = c(Var, mod[[i]]$var)
+  #   Convergence = c(Convergence, mod[[i]]$Convergence)
+  #   mse_propensity = c(mse_propensity, mod[[i]]$mse_propensity)
+  #   mse_surv = c(mse_surv, mod[[i]]$mse_surv)
+  # }
+  Coef = sapply(mod, function(x) x$x)
+  Var = sapply(mod, function(x) x$var)
+  Convergence = sapply(mod, function(x) x$Convergence)
+  mse_propensity = sapply(mod, function(x) x$mse_propensity)
+  mse_surv = sapply(mod, function(x) x$mse_surv)
+  rate_propensity = sapply(mod, function(x) x$rate_propensity)
+  rate_hazard = sapply(mod, function(x) x$rate_hazard)
+  
   return(list(Coef = Coef,
               Var = Var,
               Convergence = Convergence,
               mse_propensity = mse_propensity,
-              mse_surv = mse_surv))
+              mse_surv = mse_surv,
+              rate_propensity= rate_propensity,
+              rate_hazard = rate_hazard))
 }
 
 

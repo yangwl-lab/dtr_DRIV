@@ -85,7 +85,7 @@ cfhaz_ml_integral_est_cpp_rateCal = function(init_parameters, time, event, IV,
                                          tol = tol, contraction = contraction, eta = eta)
       out[[k]]$mse_propensity = mean((cf_IV_c_input - cf_IV_c_true)^2)
       Lam = matrix(out[[k]]$Lam[, 1], nrow = N, ncol = length(stime), byrow = TRUE)
-      out[[k]]$mse_surv = mean(apply(tmp_int*(cf_surv_input + Lam  - cf_surv_true), 1, function(d) return(sum(d)))^2)
+      out[[k]]$mse_surv = mean(apply(Yt*(cf_surv_input + Lam  - cf_surv_true), 1, function(d) return(sum(d)))^2)
       k = k + 1
     }
   }
