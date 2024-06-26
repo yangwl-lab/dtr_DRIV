@@ -1,9 +1,10 @@
+setwd("~/dtr_DRIV")
 source("Settings.R")
 library(LongCART)
 library(randomForestSRC)
 
 
-SimuArg = New_SimuArg(nrep = 100, N = 6400, p = 2, p_U = 1, Scenario = "exogenous", max_t = 3,
+SimuArg = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 3,
                       theta = 0.1, 
                       unmeasured_Confounding = unmeasured_Confounding,
                       InitCovariates = InitCovariates,
@@ -16,7 +17,7 @@ SimuArg = New_SimuArg(nrep = 100, N = 6400, p = 2, p_U = 1, Scenario = "exogenou
                       alpha = rep(0.25, 3),
                       beta = rep(0.25, 3),
                       diffcoef = 0.5)
-DataGenerating(SimuArg)
+# DataGenerating(SimuArg)
 
 
 SimuArg_dep = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 3,
@@ -48,7 +49,7 @@ SimuArg_KangSchafer = New_SimuArg(nrep = 1000, N = 1600, p = 1, p_U = 1, Scenari
                                          Annotation = "KangSchafer"),
                           beta = rep(0.5, 2),
                           diffcoef = 3)
-DataGenerating(SimuArg_KangSchafer)
+# DataGenerating(SimuArg_KangSchafer)
 
 ml_fitting_SurvCART = function(data, predictx, stime) {
   names_val = colnames(data)
@@ -112,7 +113,14 @@ ml_fitting_surv_true = function(Covariates, stime) {
   L = ifelse(L[, 1] > exp(0.25), exp(3) - L[, 1], 0.25 * L[, 1])
   # m = matrix((2.35 + 0.274 * abs(Covariates[, 1]) + 0.0685), nrow = nrow(Covariates), 
   #            ncol = length(stime), byrow = FALSE)
-  m = (2.35 + 0.274 * abs(Covariates[, 1]) + 0.0685) %*% t(c(0, diff(stime)))
+  m = (2.35 + 0.274 * abs(L) + 0.0685) %*% t(c(0, diff(stime)))
+  m2 = t(apply(m, 1, cumsum))
+  return(list(surv = m,
+              cumsurv = m2))
+}
+
+ml_fitting_surv_true2 = function(Covariates, stime){
+  m = (0.375 + 0.25*Covariates[, 1] + 0.25*Covariates[, 2]) %*% t(c(0, diff(stime)))
   m2 = t(apply(m, 1, cumsum))
   return(list(surv = m,
               cumsurv = m2))
@@ -154,6 +162,12 @@ ml_fitting_propensity_true = function(Covariates) {
   return(Z_p)
 }
 
+ml_fitting_propensity_true2 = function(Covariates) {
+  Z_p = expit(Covariates[, 1] - Covariates[, 2])
+  return(Z_p)
+}
+
+
 
 ml_fitting_propensity_logit = function(data, predictx){
   colnames(data) = c("IV", "X1")
@@ -162,47 +176,57 @@ ml_fitting_propensity_logit = function(data, predictx){
   return(expit(predict(mod, newdata = predictx)))
 }
 
-trial = SimuRun(SimuArg, methods = c("DRIV.cf.hz.est"),
-        ml_fitting_surv = ml_fitting_rfsrc,
-        ml_fitting_propensity = ml_fitting_propensity_logit)
+# trial = SimuRun(SimuArg, methods = c("DRIV.cf.hz.est"),
+#         ml_fitting_surv = ml_fitting_rfsrc,
+#         ml_fitting_propensity = ml_fitting_propensity_logit)
 
 
 
-trial1 = SimuRun_rateCal(SimuArg, methods = c("DRIV.cf.hz.ml.est.rateCal"),
-                        rate = seq(0, 1, by = 0.2),
-                        ml_fitting_surv = ml_fitting_rfsrc2,
-                        ml_fitting_propensity = ml_fitting_propensity,
-                        ml_fitting_surv_true = ml_fitting_surv_true,
-                        ml_fitting_propensity_true = ml_fitting_propensity_true, 
-                        sequence = 1:2, true_theta = 0.1)
+# trial2 = SimuRun_rateCal(SimuArg, methods = c("DRIV.cf.hz.ml.est.rateCal"),
+#                         rate = seq(0, 1, by = 0.2),
+#                         ml_fitting_surv = ml_fitting_rfsrc2,
+#                         ml_fitting_propensity = ml_fitting_propensity,
+#                         ml_fitting_surv_true = ml_fitting_surv_true2,
+#                         ml_fitting_propensity_true = ml_fitting_propensity_true2,
+#                         sequence = 1:2, true_theta = 0.1)
+# save(trial2, file="~/dtr_DRIV/trial2(del).RData")
 
-trial2 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
-                        rate = seq(0, 1, by = 0.2),
-                        ml_fitting_surv = ml_fitting_rfsrc2,
-                        ml_fitting_propensity = ml_fitting_propensity_logit,
-                        ml_fitting_surv_true = ml_fitting_surv_true,
-                        ml_fitting_propensity_true = ml_fitting_propensity_true, 
-                        sequence = 10:20)
+# trial2 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
+#                         rate = seq(0, 1, by = 0.2),
+#                         ml_fitting_surv = ml_fitting_rfsrc2,
+#                         ml_fitting_propensity = ml_fitting_propensity_logit,
+#                         ml_fitting_surv_true = ml_fitting_surv_true,
+#                         ml_fitting_propensity_true = ml_fitting_propensity_true, 
+#                         sequence = 10:20)
+# 
+# trial3 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
+#                          rate = seq(0, 1, by = 0.2),
+#                          ml_fitting_surv = ml_fitting_rfsrc2,
+#                          ml_fitting_propensity = ml_fitting_propensity_logit,
+#                          ml_fitting_surv_true = ml_fitting_surv_true,
+#                          ml_fitting_propensity_true = ml_fitting_propensity_true, 
+#                          sequence = 20:30)
+# 
+# trial4 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
+#                          rate = seq(0, 1, by = 0.2),
+#                          ml_fitting_surv = ml_fitting_rfsrc2,
+#                          ml_fitting_propensity = ml_fitting_propensity_logit,
+#                          ml_fitting_surv_true = ml_fitting_surv_true,
+#                          ml_fitting_propensity_true = ml_fitting_propensity_true, 
+#                          sequence = 30:40)
+# trial5 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
+#                          rate = seq(0, 1, by = 0.2),
+#                          ml_fitting_surv = ml_fitting_rfsrc2,
+#                          ml_fitting_propensity = ml_fitting_propensity_logit,
+#                          ml_fitting_surv_true = ml_fitting_surv_true,
+#                          ml_fitting_propensity_true = ml_fitting_propensity_true, 
+#                          sequence = 40:50)
 
-trial3 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
-                         rate = seq(0, 1, by = 0.2),
-                         ml_fitting_surv = ml_fitting_rfsrc2,
-                         ml_fitting_propensity = ml_fitting_propensity_logit,
-                         ml_fitting_surv_true = ml_fitting_surv_true,
-                         ml_fitting_propensity_true = ml_fitting_propensity_true, 
-                         sequence = 20:30)
-
-trial4 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
-                         rate = seq(0, 1, by = 0.2),
-                         ml_fitting_surv = ml_fitting_rfsrc2,
-                         ml_fitting_propensity = ml_fitting_propensity_logit,
-                         ml_fitting_surv_true = ml_fitting_surv_true,
-                         ml_fitting_propensity_true = ml_fitting_propensity_true, 
-                         sequence = 30:40)
-trial5 = SimuRun_rateCal(SimuArg_KangSchafer, methods = c("DRIV.cf.hz.ml.est.rateCal"),
-                         rate = seq(0, 1, by = 0.2),
-                         ml_fitting_surv = ml_fitting_rfsrc2,
-                         ml_fitting_propensity = ml_fitting_propensity_logit,
-                         ml_fitting_surv_true = ml_fitting_surv_true,
-                         ml_fitting_propensity_true = ml_fitting_propensity_true, 
-                         sequence = 40:50)
+# co = NULL
+# for(i in 1:100){
+#   data = jsonlite::read_json(paste0("~/dtr_DRIV/DataGenerated/1600/",i, ".json"), simplifyVector = TRUE)
+#   k = ahaz::ahaz(survival::Surv(data$T_0+ runif(1600, 0, 0.0001), event), data$Covariates[, 1:2])
+#   p = predict(k, type= "cumhaz")
+#   co = rbind(co, c(coef(k), p$cumhaz[which(p$times>=0.1)[1]-1]))
+# }
+# apply(co, 2, mean)

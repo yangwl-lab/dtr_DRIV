@@ -156,7 +156,7 @@ DataFitting.ModelPar.ITT = function(ModelPar){
                         event = event,
                         type = "right")
   mod = ahaz::ahaz(surv, cbind(ModelPar$dat$Z, 
-                               ModelPar$dat$Covariates[, 1:ModelPar$p]))
+                               ModelPar$dat$Covariates[, ]))
   return(list(Coef = coef(mod),
               Var = diag(vcov(mod))))
 }
@@ -169,7 +169,7 @@ DataFitting.ModelPar.remove = function(ModelPar){
   surv = survival::Surv(ModelPar$dat$T_D_c[event_remove] + runif(sum(event_remove), 0, 0.01), 
                         event = event[event_remove], type = "right")
   mod = ahaz::ahaz(surv, cbind(ModelPar$dat$Z[event_remove], 
-                               ModelPar$dat$Covariates[event_remove, 1:ModelPar$p]))
+                               ModelPar$dat$Covariates[event_remove, ]))
   return(list(Coef = coef(mod),
               Var = diag(vcov(mod))))
 }
@@ -183,7 +183,7 @@ DataFitting.ModelPar.recensor = function(ModelPar){
   T_D_c_w = ifelse(ModelPar$dat$T_D_c < ModelPar$dat$W, ModelPar$dat$T_D_c, ModelPar$dat$W)
   surv = survival::Surv(T_D_c_w + runif(ModelPar$N, 0, 0.01), event = event_w, type = "right")
   mod = ahaz::ahaz(surv, cbind(ModelPar$dat$Z, 
-                               ModelPar$dat$Covariates[, 1:ModelPar$p]))
+                               ModelPar$dat$Covariates))
   return(list(Coef = coef(mod),
               Var = diag(vcov(mod))))
 }
@@ -194,7 +194,7 @@ DataFitting.ModelPar.TimeVar = function(ModelPar){
   event = ModelPar$dat$event
   event_w = ModelPar$dat$T_D_c > ModelPar$dat$W
   tvdat = data.frame(id = 1:ModelPar$N, treatment = ModelPar$dat$Z, 
-                     ModelPar$dat$Covariates[, 1:ModelPar$p], event = event, 
+                     ModelPar$dat$Covariates, event = event, 
                      start_time = 0, end_time = ModelPar$dat$T_D_c)
   swdat = tvdat[event_w, ]
   tvdat$end_time[event_w] = ModelPar$dat$W[event_w]
@@ -274,12 +274,12 @@ DataFitting.ModelPar.DRIV.s = function(ModelPar){
   }
   if(!("Covariates2" %in% names(ModelPar))){
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE], 
-                            Covariates2 = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE], 
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
+                            Covariates2 = ModelPar$dat$Covariates, 
                             D_status = D_status, stime = stime)
   }else{
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE], 
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
                             Covariates2 = ModelPar$Covariates2, 
                             D_status = D_status, stime = stime)
   }
@@ -309,12 +309,12 @@ DataFitting.ModelPar.DRIV.s.nleqslv = function(ModelPar){
   }
   if(!("Covariates2" %in% names(ModelPar))){
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p], 
-                            Covariates2 = ModelPar$dat$Covariates[, 1:ModelPar$p], 
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
+                            Covariates2 = ModelPar$dat$Covariates, 
                             D_status = D_status, stime = stime)
   }else{
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p], 
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
                             Covariates2 = ModelPar$Covariates2, 
                             D_status = D_status, stime = stime)
   }
@@ -354,12 +354,12 @@ DataFitting.ModelPar.DRIV.cf.hz = function(ModelPar){
   
   if(!("Covariates2" %in% names(ModelPar))){
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p], 
-                            Covariates2 = ModelPar$dat$Covariates[, 1:ModelPar$p], 
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
+                            Covariates2 = ModelPar$dat$Covariates, 
                             D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
   }else{
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p], 
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
                             Covariates2 = ModelPar$Covariates2, 
                             D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
   }
@@ -394,12 +394,12 @@ DataFitting.ModelPar.DRIV.cf.hz.est = function(ModelPar){
   
   if(!("Covariates2" %in% names(ModelPar))){
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p], 
-                            Covariates2 = ModelPar$dat$Covariates[, 1:ModelPar$p], 
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
+                            Covariates2 = ModelPar$dat$Covariates, 
                             D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
   }else{
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p], 
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
                             Covariates2 = ModelPar$Covariates2, 
                             D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
   }
@@ -435,14 +435,14 @@ DataFitting.ModelPar.DRIV.cf.hz.ml.est = function(ModelPar){
   
   if(!("Covariates2" %in% names(ModelPar))){
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE],
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates,
                             ml_fitting_surv = ModelPar$ml_fitting_surv,
                             ml_fitting_propensity = ModelPar$ml_fitting_propensity,
-                            Covariates2 = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE], 
+                            Covariates2 = ModelPar$dat$Covariates, 
                             D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
   }else{
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE], 
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
                             ml_fitting_surv = ModelPar$ml_fitting_surv,
                             ml_fitting_propensity = ModelPar$ml_fitting_propensity,
                             Covariates2 = ModelPar$Covariates2, 
@@ -479,18 +479,18 @@ DataFitting.ModelPar.DRIV.cf.hz.ml.est.rateCal = function(ModelPar){
   
   if(!("Covariates2" %in% names(ModelPar))){
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE],
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates,
                             ml_fitting_surv = ModelPar$ml_fitting_surv,
                             ml_fitting_propensity = ModelPar$ml_fitting_propensity,
                             ml_fitting_surv_true = ModelPar$ml_fitting_surv_true,
                             ml_fitting_propensity_true = ModelPar$ml_fitting_propensity_true,
                             rate = ModelPar$rate,
                             true_theta = ModelPar$true_theta,
-                            Covariates2 = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE], 
+                            Covariates2 = ModelPar$dat$Covariates, 
                             D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
   }else{
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
-                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates[, 1:ModelPar$p, drop = FALSE], 
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
                             ml_fitting_surv = ModelPar$ml_fitting_surv,
                             ml_fitting_propensity = ModelPar$ml_fitting_propensity,
                             ml_fitting_surv_true = ModelPar$ml_fitting_surv_true,
@@ -528,7 +528,7 @@ DataFitting.ModelPar.remove.control = function(ModelPar){
   event_remove = event_remove & (ModelPar$dat$Z == 0)
   surv = survival::Surv(ModelPar$dat$T_D_c[event_remove] + runif(sum(event_remove), 0, 0.01), 
                         event = event[event_remove], type = "right")
-  mod = ahaz::ahaz(surv, ModelPar$dat$Covariates[event_remove, 1:ModelPar$p])
+  mod = ahaz::ahaz(surv, ModelPar$dat$Covariates[event_remove, ])
   return(list(Coef = c(0, coef(mod)),
               Var = c(0,diag(vcov(mod)))))
 }
@@ -539,7 +539,7 @@ DataFitting.ModelPar.counterfactual = function(ModelPar){
   event = rep(1, length(ModelPar$dat$event))
   surv = survival::Surv(ModelPar$dat$T_0 + runif(ModelPar$N, 0, 0.0001), 
                         event = event, type = "right")
-  mod = ahaz::ahaz(surv, ModelPar$dat$Covariates[, 1:ModelPar$p])
+  mod = ahaz::ahaz(surv, ModelPar$dat$Covariates[, ])
   return(list(Coef = c(0, coef(mod)),
               Var = c(0,diag(vcov(mod)))))
 }
