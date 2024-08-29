@@ -29,7 +29,7 @@ SimuRun = function(SimuArg, methods,
                                       SimuArg$initials$N,
                                       SimuArg$Control$Annotation, 
                                       "/", i, ".json"), simplifyVector = T)
-    data$Covariates = data$Covariates[, 1:args$p]
+    data$Covariates = data$Covariates[, 1:args$p, drop = FALSE]
     colnames(data$Covariates) = paste0("X", 1:args$p)
     args$dat = data
     cat("[[rep", i)

@@ -28,27 +28,27 @@ cfhaz_integral_est_cpp = function(init_parameters, time, event, IV,
   cf_dLam = matrix(0, nrow = N, ncol = length(stime), byrow = T)
   for (i in 1:length(cflist)) {
     ind = cflist[[i]]
-    tmp_df = data.frame(IV = IV[-ind], Covariates2[-ind,])
+    tmp_df = data.frame(IV = IV[-ind], Covariates2[-ind, , drop = FALSE])
     mod = glm(IV ~ ., data = tmp_df, family = binomial(link = "logit"))
     IV_c = IV[-ind] - expit(predict(mod))
     
     out = integral2_est(init_parameters = init_parameters, time = time[-ind], 
-                        event = event[-ind], IV = IV[-ind], IV_c = IV_c, Covariates = b_Covariates[-ind, ], 
+                        event = event[-ind], IV = IV[-ind], IV_c = IV_c, Covariates = b_Covariates[-ind, , drop = FALSE], 
                         D_status = D_status[-ind, ], stime = stime, max_iter = max_iter,
                         tol = tol, contraction = contraction, eta = eta)
     # dLam = diff(out$Lam[, 1])
     # print(head(out$Lam))
     # if(any(is.na(dLam))) dLam[which(is.na(dLam))] = 0
-    cf_IV_c[ind] = IV[ind] - expit(predict(mod, newdata = data.frame(Covariates2[ind, ])))
+    cf_IV_c[ind] = IV[ind] - expit(predict(mod, newdata = data.frame(Covariates2[ind, , drop = FALSE])))
     # cf_IV_c[ind] = IV[ind]
     cf_beta[ind, ] = matrix(out$x[-1], byrow = T, nrow = length(ind), ncol = length(out$x[-1]))
     
-    cf_dLam[ind, ] = matrix(out$Lam[, 1], byrow = T, nrow = length(ind), ncol = length(stime))
+    cf_dLam[ind, ] = matrix(out$dLam[, 1], byrow = T, nrow = length(ind), ncol = length(stime))
     # if(i == 1) print(matrix(out$Lam[, 1], byrow = T, nrow = length(ind), ncol = length(stime))[, 1:10])
   }
   
   
-  out = cf_integral_est(0.1, time = time, event = event, IV = IV, cf_IV_c = cf_IV_c,
+  out = cf_integral_est(0.01, time = time, event = event, IV = IV, cf_IV_c = cf_IV_c,
                          Covariates = b_Covariates, D_status = D_status, stime = stime,
                          cf_beta = cf_beta, cf_dLam = cf_dLam, max_iter = max_iter,
                          tol = tol, contraction = contraction, eta = eta)

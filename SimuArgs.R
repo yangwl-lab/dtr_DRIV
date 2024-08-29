@@ -16,7 +16,7 @@ SimuArg = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogeno
                       alpha = rep(0.25, 3),
                       beta = rep(0.25, 3),
                       diffcoef = 0.5)
-# DataGenerating(SimuArg)
+DataGenerating(SimuArg)
 
 
 SimuArg_dep = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 3,

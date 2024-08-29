@@ -39,7 +39,7 @@ InitCovariates = function(N, p, p_U, unmeasured_Confounding){
 # Propensity Score --------------------------------------------------------
 
 InitAssignment = function(N, p, Covariates, gamma){
-  Z_p = expit(Covariates[, 1:p] %*% gamma[1:p])
+  Z_p = expit(Covariates[, 1:p, drop = FALSE] %*% gamma[1:p])
   return(Z = rbinom(N, 1, Z_p))
 }
 

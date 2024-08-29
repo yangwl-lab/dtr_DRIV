@@ -128,10 +128,10 @@ SEXP cf_integral_est(
     
     pk = -fn/Hessian;
     new_betaD = betaD + pk;
-    fn_abs = abs(fn);
+    fn_abs = fabs(fn);
     // arma::arma_print(fn_abs);
     // arma::arma_print(arma::sum(fn_abs));
-    diff = abs(new_betaD - betaD);
+    diff = fabs(new_betaD - betaD);
     if(fn_abs < tol ||diff < (tol * tol))
     {
       step = iter;

@@ -198,7 +198,7 @@ DataFitting.ModelPar.TimeVar = function(ModelPar){
                      start_time = 0, end_time = ModelPar$dat$T_D_c)
   swdat = tvdat[event_w, ]
   tvdat$end_time[event_w] = ModelPar$dat$W[event_w]
-  tvdat$event[event_w] = F
+  tvdat$event[event_w] = FALSE
   swdat$start_time = ModelPar$dat$W[event_w]
   swdat$treatment = 1 - swdat$treatment
   adat = rbind(tvdat, swdat)
