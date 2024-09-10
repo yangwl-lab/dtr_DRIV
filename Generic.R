@@ -199,6 +199,8 @@ DataFitting.ModelPar.TimeVar = function(ModelPar){
   # event = ModelPar$dat$T_D < ModelPar$dat$C & ModelPar$dat$T_D < ModelPar$max_t
   event = ModelPar$dat$event
   event_w = ModelPar$dat$T_D_c > ModelPar$dat$W
+  p = ncol(ModelPar$dat$Covariates)
+  colnames(ModelPar$dat$Covariates) = paste0("X", 1:p)
   tvdat = data.frame(id = 1:ModelPar$N, treatment = ModelPar$dat$Z, 
                      ModelPar$dat$Covariates, event = event, 
                      start_time = 0, end_time = ModelPar$dat$T_D_c)
@@ -266,18 +268,27 @@ DataFitting.ModelPar.DRIV.s = function(ModelPar){
   event = ModelPar$dat$event
   # T_D_c = ceiling(ModelPar$dat$T_D_c * ModelPar$Control$grid)/ModelPar$Control$grid
   T_D_c = ModelPar$dat$T_D_c
-  stime = sort(T_D_c)
-  stime = unique(stime)
-  k = length(stime)
-  D_status = matrix(nrow = ModelPar$N, ncol = k)
-  for (i in 1:ModelPar$N) {
-    if(T_D_c[i] > ModelPar$dat$W[i]){
-      D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
-      D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
-    } else {
-      D_status[i, ] = ModelPar$dat$Z[i]
-    }
+  if(is.null(ModelPar$dat$stime)){
+    stime = sort(T_D_c)
+    stime = unique(stime)
+  } else {
+    stime = ModelPar$dat$stime
   }
+  k = length(stime)
+  if(is.null(ModelPar$dat$D_status)){
+    D_status = matrix(nrow = ModelPar$N, ncol = k)
+    for (i in 1:ModelPar$N) {
+      if(T_D_c[i] > ModelPar$dat$W[i]){
+        D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
+        D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
+      } else {
+        D_status[i, ] = ModelPar$dat$Z[i]
+      }
+    }
+  } else {
+    D_status = ModelPar$dat$D_status
+  }
+  
   if(!("Covariates2" %in% names(ModelPar))){
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
                             IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
@@ -301,17 +312,25 @@ DataFitting.ModelPar.DRIV.s.nleqslv = function(ModelPar){
   event = ModelPar$dat$event
   # T_D_c = ceiling(ModelPar$dat$T_D_c * ModelPar$Control$grid)/ModelPar$Control$grid
   T_D_c = ModelPar$dat$T_D_c
-  stime = sort(T_D_c)
-  stime = unique(stime)
+  if(is.null(ModelPar$dat$stime)){
+    stime = sort(T_D_c)
+    stime = unique(stime)
+  } else {
+    stime = ModelPar$dat$stime
+  }
   k = length(stime)
-  D_status = matrix(nrow = ModelPar$N, ncol = k)
-  for (i in 1:ModelPar$N) {
-    if(T_D_c[i] > ModelPar$dat$W[i]){
-      D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
-      D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
-    } else {
-      D_status[i, ] = ModelPar$dat$Z[i]
+  if(is.null(ModelPar$dat$D_status)){
+    D_status = matrix(nrow = ModelPar$N, ncol = k)
+    for (i in 1:ModelPar$N) {
+      if(T_D_c[i] > ModelPar$dat$W[i]){
+        D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
+        D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
+      } else {
+        D_status[i, ] = ModelPar$dat$Z[i]
+      }
     }
+  } else {
+    D_status = ModelPar$dat$D_status
   }
   if(!("Covariates2" %in% names(ModelPar))){
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
@@ -382,17 +401,25 @@ DataFitting.ModelPar.DRIV.cf.hz.est = function(ModelPar){
   event = ModelPar$dat$event
   # T_D_c = ceiling(ModelPar$dat$T_D_c * ModelPar$Control$grid)/ModelPar$Control$grid
   T_D_c = ModelPar$dat$T_D_c
-  stime = sort(T_D_c)
-  stime = unique(stime)
+  if(is.null(ModelPar$dat$stime)){
+    stime = sort(T_D_c)
+    stime = unique(stime)
+  } else {
+    stime = ModelPar$dat$stime
+  }
   k = length(stime)
-  D_status = matrix(nrow = ModelPar$N, ncol = k)
-  for (i in 1:ModelPar$N) {
-    if(T_D_c[i] > ModelPar$dat$W[i]){
-      D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
-      D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
-    } else {
-      D_status[i, ] = ModelPar$dat$Z[i]
+  if(is.null(ModelPar$dat$D_status)){
+    D_status = matrix(nrow = ModelPar$N, ncol = k)
+    for (i in 1:ModelPar$N) {
+      if(T_D_c[i] > ModelPar$dat$W[i]){
+        D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
+        D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
+      } else {
+        D_status[i, ] = ModelPar$dat$Z[i]
+      }
     }
+  } else {
+    D_status = ModelPar$dat$D_status
   }
   
   if(is.null(ModelPar$nfolds)) ModelPar$nfolds = 10
@@ -421,18 +448,27 @@ DataFitting.ModelPar.DRIV.cf.hz.ml.est = function(ModelPar){
   event = ModelPar$dat$event
   # T_D_c = ceiling(ModelPar$dat$T_D_c * ModelPar$Control$grid)/ModelPar$Control$grid
   T_D_c = ModelPar$dat$T_D_c
-  stime = sort(T_D_c)
-  stime = unique(stime)
-  k = length(stime)
-  D_status = matrix(nrow = ModelPar$N, ncol = k)
-  for (i in 1:ModelPar$N) {
-    if(T_D_c[i] > ModelPar$dat$W[i]){
-      D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
-      D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
-    } else {
-      D_status[i, ] = ModelPar$dat$Z[i]
-    }
+  if(is.null(ModelPar$dat$stime)){
+    stime = sort(T_D_c)
+    stime = unique(stime)
+  } else {
+    stime = ModelPar$dat$stime
   }
+  k = length(stime)
+  if(is.null(ModelPar$dat$D_status)){
+    D_status = matrix(nrow = ModelPar$N, ncol = k)
+    for (i in 1:ModelPar$N) {
+      if(T_D_c[i] > ModelPar$dat$W[i]){
+        D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
+        D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
+      } else {
+        D_status[i, ] = ModelPar$dat$Z[i]
+      }
+    }
+  } else {
+    D_status = ModelPar$dat$D_status
+  }
+  
   
   if(is.null(ModelPar$ml_fitting_surv)) stop("ml_fitting_surv is not specified")
   if(is.null(ModelPar$ml_fitting_propensity)) stop("ml_fitting_propensity is not specified")
@@ -465,17 +501,25 @@ DataFitting.ModelPar.DRIV.cf.hz.ml.est.rateCal = function(ModelPar){
   event = ModelPar$dat$event
   # T_D_c = ceiling(ModelPar$dat$T_D_c * ModelPar$Control$grid)/ModelPar$Control$grid
   T_D_c = ModelPar$dat$T_D_c
-  stime = sort(T_D_c)
-  stime = unique(stime)
+  if(is.null(ModelPar$dat$stime)){
+    stime = sort(T_D_c)
+    stime = unique(stime)
+  } else {
+    stime = ModelPar$dat$stime
+  }
   k = length(stime)
-  D_status = matrix(nrow = ModelPar$N, ncol = k)
-  for (i in 1:ModelPar$N) {
-    if(T_D_c[i] > ModelPar$dat$W[i]){
-      D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
-      D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
-    } else {
-      D_status[i, ] = ModelPar$dat$Z[i]
+  if(is.null(ModelPar$dat$D_status)){
+    D_status = matrix(nrow = ModelPar$N, ncol = k)
+    for (i in 1:ModelPar$N) {
+      if(T_D_c[i] > ModelPar$dat$W[i]){
+        D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
+        D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
+      } else {
+        D_status[i, ] = ModelPar$dat$Z[i]
+      }
     }
+  } else {
+    D_status = ModelPar$dat$D_status
   }
   
   if(is.null(ModelPar$ml_fitting_surv)) stop("ml_fitting_surv is not specified")
@@ -685,6 +729,105 @@ print.SimuResults = function(SimuResults, ...){
   cat("\n")
 }
 
+print.SimuResults = function(SimuResults, ...){
+  results = rlang::dots_list(!!!SimuResults, !!!list(...), 
+                             Comp_parameters = rep(0, SimuResults$initials$p+1),
+                             .homonyms = "first")
+  cat("Simulation Results for ")
+  cat(results$methods, ":\n")
+  tb = NULL
+  tb2 = NULL
+  tb3 = NULL
+  for (j in results$methods) {
+    
+    tb = rbind(tb, apply(results$SimuResults[[j]]$Coef, 1, mean) - results$Comp_parameters)
+    tb2 = rbind(tb2, apply(results$SimuResults[[j]]$Coef, 1, sd))
+    # browser()
+    if(j %in% c("DRIV.s", "DRIV.cf.hz.ml.est", "DRIV.cf.hz.est")){
+      tb3 = rbind(tb3, c(mean(sqrt(results$SimuResults[[j]]$Var)), rep(0, nrow(results$SimuResults[[j]]$Coef) - 1)))
+    } else {
+      tb3 = rbind(tb3, apply(sqrt(results$SimuResults[[j]]$Var), 1, mean))
+    }
+  }
+  rownames(tb) = results$methods
+  colnames(tb) = c("theta", paste0("alpha", 1:(SimuResults$initials$p)))
+  rownames(tb2) = results$methods
+  colnames(tb2) = c("theta", paste0("alpha", 1:(SimuResults$initials$p)))
+  rownames(tb3) = results$methods
+  colnames(tb3) = c("theta", paste0("alpha", 1:(SimuResults$initials$p)))
+  cat("\t Mean bias or sampling mean: ", "\n")
+  print.default(round(tb, 4), print.gap = 2L)
+  cat("\n")
+  cat("\t Standard deviation: ", "\n")
+  print.default(round(tb2, 4), print.gap = 2L)
+  cat("\n")
+  cat("\t Mean standard error: ", "\n")
+  print.default(round(tb3, 4), print.gap = 2L)
+  cat("\n")
+}
 
+print.TRTSWE = function(Results, all = FALSE, ...){
+  results = rlang::dots_list(!!!Results, !!!list(...),
+                             .homonyms = "first")
+  
+  cat("Results for ")
+  cat(names(Results), ":\n")
+  tb = NULL
+  # tb2 = NULL
+  tb3 = NULL
+  tb4 = NULL
+  p = 0
+  for(j in names(Results)){
+    if(length(results[[j]]$Estim$Coef)>p) p= length(results[[j]]$Estim$Coef)
+  }
+  
+  
+  for (j in names(Results)) {
+    
+    
+    # browser()
+    if(j %in% c("DRIV.s", "DRIV.cf.hz.ml.est", "DRIV.cf.hz.est")){
+      if(j %in% "DRIV.s") {
+        tb = rbind(tb, as.vector(results[[j]]$Estim$Coef))
+      } else {
+        tb = rbind(tb, c(results[[j]]$Estim$Coef, rep(NA, p-1)))
+      }
+      # tb2 = rbind(tb2, c(sd(results[[j]]$Estim$Coef), rep(NA, p-1)))
+      tb3 = rbind(tb3, c(sqrt(results[[j]]$Estim$Var), rep(NA, p-1)))
+      
+    } else {
+      tb = rbind(tb, results[[j]]$Estim$Coef)
+      # tb2 = rbind(tb2, results[[j]]$Estim$Coef)
+      tb3 = rbind(tb3, sqrt(results[[j]]$Estim$Var))
+    }
+  }
+  rownames(tb) = names(Results)
+  colnames(tb) = c("theta", paste0("alpha", 1:(p-1)))
+  # rownames(tb2) = results$methods
+  # colnames(tb2) = c("theta", paste0("alpha", 1:(SimuResults$initials$p)))
+  rownames(tb3) = names(Results)
+  colnames(tb3) = c("theta", paste0("alpha", 1:(p-1)))
+  
+  if(all){
+    cat("\t Coef: ", "\n")
+    print.default(round(tb, 4), print.gap = 2L)
+    cat("\n")
+    # cat("\t Standard deviation: ", "\n")
+    # print.default(round(tb2, 4), print.gap = 2L)
+    # cat("\n")
+    cat("\t Standard error: ", "\n")
+    print.default(round(tb3, 4), print.gap = 2L)
+    cat("\n")
+    tb4 = 2*(1- pnorm(abs(tb/tb3)))
+    cat("\t P-value: ", "\n")
+    print.default(round(tb4, 4), print.gap = 2L)
+  }else {
+    tb4 = 2*(1- pnorm(abs(tb/tb3)))
+    tb = cbind(tb[, 1], tb3[, 1], tb4[, 1])
+    colnames(tb) = c("theta", "SE", "Pval")
+    print.default(round(tb, 4), print.gap = 2L)
+  }
+  
+}
 
 
