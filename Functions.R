@@ -3,7 +3,7 @@ SimuRun = function(SimuArg, methods,
                                   max_iter = 20, 
                                   tol = 1e-5, 
                                   contraction = 0.5, 
-                                  eta = 1e-4), ...){
+                                  eta = 1e-4), sequence = NULL, ...){
   Validate_method(methods)
   args = rlang::dots_list(N = SimuArg$initials$N,
                           p = SimuArg$initials$p,
@@ -23,12 +23,14 @@ SimuRun = function(SimuArg, methods,
     }
     out[[kk]] = templist
   }
-  for (i in 1:SimuArg$initials$nrep) {
+  if(is.null(sequence)) sequence = 1:SimuArg$initials$nrep
+  
+  for (i in sequence) {
     data = jsonlite::read_json(paste0(SimuArg$Control$save_path, 
                                       "DataGenerated/",
                                       SimuArg$initials$N,
                                       SimuArg$Control$Annotation, 
-                                      "/", i, ".json"), simplifyVector = T)
+                                      "/", i, ".json"), simplifyVector = TRUE)
     data$Covariates = data$Covariates[, 1:args$p, drop = FALSE]
     colnames(data$Covariates) = paste0("X", 1:args$p)
     args$dat = data

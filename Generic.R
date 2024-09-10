@@ -93,21 +93,26 @@ DataGenerating.SimuArg.endogenous = function(SimuArg) {
   censoring_rate = NULL
   adcensoring_rate = NULL
   for (kk in 1:SimuArg$initials$nrep) {
-    Covariates = easy_call(SimuArg$InitCovariates, args)
-    r_T_D = rexp(args$N)
+    Covariates = easy_call(SimuArg$InitCovariates, rlang::dots_list(!!!args, unmeasured_Confounding = SimuArg$unmeasured_Confounding))
     Z = easy_call(SimuArg$InitAssignment, rlang::dots_list(!!!args, Covariates = Covariates))
-    W = easy_call(SimuArg$SwitchingTime, rlang::dots_list(!!!args, Covariates = Covariates, Z = Z, r_T_D = r_T_D))
-    T_D = easy_call(SimuArg$SurvTime, rlang::dots_list(!!!args, Covariates = Covariates, W = W, Z = Z, r_T_D = r_T_D))
+    T = rexp(args$N)
+    W = easy_call(SimuArg$SwitchingTime, rlang::dots_list(!!!args, Covariates = Covariates, Z = Z, T = T))
+    T = easy_call(SimuArg$SurvTime, rlang::dots_list(!!!args, Covariates = Covariates, W = W, Z = Z, T = T))
+    T_D = T$T_D
+    T_0 = T$T_0
     C = easy_call(SimuArg$CensoringTime, rlang::dots_list(!!!args, Covariates = Covariates))
     T_D_c = ifelse(T_D <= C, T_D, C)
     T_D_c = ifelse(T_D_c <= args$max_t, T_D_c, args$max_t)
     event = T_D <= C & T_D <= args$max_t
+    W_copy = W
     W[W < 0] = Inf
+    if(any(T_D <= 0)) warning("Negative time-to-event outcome occurs")
     data = list(Covariates = Covariates,
                 Z = Z,
                 W = W,
                 T_D_c = T_D_c,
                 T_D = T_D,
+                T_0 = T_0,
                 C = C,
                 event = event)
     if(SimuArg$Control$json_save){
@@ -138,7 +143,8 @@ DataGenerating.SimuArg.endogenous = function(SimuArg) {
        switching_rate_from_0 = mean(switching_rate_from_0),
        switching_rate_from_1 = mean(switching_rate_from_1),
        censoring_rate = mean(censoring_rate),
-       adcensoring_rate = mean(adcensoring_rate))
+       adcensoring_rate = mean(adcensoring_rate),
+       anyNegetive = sum(W_copy < 0))
 }
 
 
@@ -656,7 +662,7 @@ print.SimuResults = function(SimuResults, ...){
     tb = rbind(tb, apply(results$SimuResults[[j]]$Coef, 1, mean) - results$Comp_parameters)
     tb2 = rbind(tb2, apply(results$SimuResults[[j]]$Coef, 1, sd))
     # browser()
-    if(j %in% c("DRIV.s", "DRIV.cf.hz.ml.est")){
+    if(j %in% c("DRIV.s", "DRIV.cf.hz.ml.est", "DRIV.cf.hz.est")){
       tb3 = rbind(tb3, c(mean(sqrt(results$SimuResults[[j]]$Var)), rep(0, nrow(results$SimuResults[[j]]$Coef) - 1)))
     } else {
       tb3 = rbind(tb3, apply(sqrt(results$SimuResults[[j]]$Var), 1, mean))

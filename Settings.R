@@ -39,7 +39,7 @@ InitCovariates = function(N, p, p_U, unmeasured_Confounding){
 # Propensity Score --------------------------------------------------------
 
 InitAssignment = function(N, p, Covariates, gamma){
-  Z_p = expit(Covariates[, 1:p, drop = FALSE] %*% gamma[1:p])
+  Z_p = expit(Covariates[, 1:p, drop = FALSE] %*% gamma[1:p] - mean(Covariates[, 1:p, drop = FALSE] %*% gamma[1:p]))
   return(Z = rbinom(N, 1, Z_p))
 }
 
@@ -66,6 +66,23 @@ SurvTime = function(N, p, Covariates, W, theta, alpha, Z){
   W[W <= 0] = Inf
   W_copy[W_copy <= 0] = 0
   T = rexp(N)
+  T_0 = T/(0.25 + Covariates %*% alpha)
+  T_D = T/(0.25 + theta*Z + Covariates %*% alpha)
+  T_D_ind = T_D >= W
+  if(any(T_D_ind)){
+    T_D[T_D_ind] = ((T_D*(0.25 + theta*Z + Covariates %*% alpha)- 
+                       (theta * Z * W_copy - theta* (1-Z)*W_copy))/
+                      (0.25 + theta*(1-Z) + Covariates %*% alpha))[T_D_ind]
+  }
+  return(list(T_D = as.vector(T_D),
+              T_0 = T_0))
+}
+
+
+SurvTime_endogenous = function(N, p, Covariates, W, theta, alpha, Z, T){
+  W_copy = W
+  W[W <= 0] = Inf
+  W_copy[W_copy <= 0] = 0
   T_0 = T/(0.25 + Covariates %*% alpha)
   T_D = T/(0.25 + theta*Z + Covariates %*% alpha)
   T_D_ind = T_D >= W
@@ -112,9 +129,19 @@ SwitchingTime = function(N, p, Covariates, Z, beta, diffcoef){
   return(W)
 }
 
+SwitchingTime_endogenous = function(N, p, Covariates, Z, beta, diffcoef, T, alpha) {
+  T_0 = T/(0.25 + Covariates %*% alpha)
+  W = ifelse(as.logical(Z), rexp(N)/(exp(-T_0)*0.5*(0.1 + diffcoef*Z + Covariates %*% beta)),
+             rexp(N)/(exp(-T_0)*0.5*(0.1 - diffcoef*(1 - Z) + Covariates %*% beta)))
+}
 
-CensoringTime = function(N, p, Covariates) {
-  C = rexp(N)/(0.1 + Covariates[, 1:(p), drop = FALSE] %*% rep(0.05, p))
+
+CensoringTime = function(N, p, Covariates, censoring_par, censoring_intercept) {
+  C = rexp(N)/(censoring_intercept + Covariates[, 1:(p), drop = FALSE] %*% censoring_par[1:p])
+}
+
+CensoringTime_nonlinear = function(N, p, Covariates) {
+  C = rexp(N)/(0.1 + Covariates[, 1:(p), drop = FALSE] %*% rep(0.8, p))
 }
 
 

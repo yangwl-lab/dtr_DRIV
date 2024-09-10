@@ -16,7 +16,7 @@ SimuArg = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogeno
                       alpha = rep(0.25, 3),
                       beta = rep(0.25, 3),
                       diffcoef = 0.5)
-DataGenerating(SimuArg)
+# DataGenerating(SimuArg)
 
 
 SimuArg_dep = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 3,
@@ -64,17 +64,16 @@ ml_fitting_SurvCART = function(data, predictx, stime) {
 ml_fitting_rfsrc = function(data, predictx) {
   ind_control = apply(data$D_status, 1, function(d) return(all(d == 0)))
   p = ncol(data$Covariates)
-  tmp_data = data.frame(time = data$time, event = data$event,
-                        data$Covariates)
+  tmp_data = data.frame(time = data$time[ind_control], event = data$event[ind_control],
+                        data$Covariates[ind_control, , drop = FALSE])
   colnames(tmp_data) = c("time", "event", paste0("X", 1:p))
   colnames(predictx) = paste0("X", 1:p)
-  mod = rfsrc(Surv(time, event) ~ ., data = tmp_data)
+  mod = rfsrc(Surv(time, event) ~ ., data = tmp_data, ntime = NULL)
   pre_mod = predict(mod, newdata = predictx)
   pre_mod_stime = pre_mod$time.interest
   pre_mod_chf = pre_mod$chf
   pre_mod_chf = cbind(pre_mod_chf[, 1], t(apply(pre_mod_chf, 1, diff)))
   tmp_chf = matrix(0, nrow = nrow(predictx), ncol = length(data$stime))
-  k = 1
   for(j in 1:length(pre_mod_stime)) {
     tmp_chf[, data$stime >= pre_mod_stime[j]] = pre_mod_chf[, j]
   }
