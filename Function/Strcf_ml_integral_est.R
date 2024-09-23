@@ -3,27 +3,41 @@ library(Rcpp)
 sourceCpp("Function/integral/integral_customized_est.cpp")
 
 
-cf_group = function(nfolds, datasize, seed) {
-  cvlist <- list()
+cf_group2 = function(nfolds, seed, IV) {
+  cvlist1 <- list()
+  datasize = length(IV[IV == 0])
   if(!is.null(seed)) set.seed(seed)
   n <- rep(1:nfolds,ceiling(datasize/nfolds))[1:datasize]    
   temp <- sample(n,datasize)  
   x <- 1:nfolds
   dataseq <- 1:datasize
-  cvlist <- lapply(x,function(x) dataseq[temp==x])
+  cvlist1 <- lapply(x,function(x) dataseq[temp==x])
+  
+  cvlist2 = list()
+  datasize2 = length(IV[IV == 1])
+  n <- rep(1:nfolds,ceiling(datasize2/nfolds))[1:datasize2]    
+  temp <- sample(n,datasize2)  
+  x <- 1:nfolds
+  dataseq <- 1:datasize2
+  cvlist2 <- lapply(x,function(x) dataseq[temp==x])
+  
+  cvlist = list()
+  for (i in 1:nfolds) {
+    cvlist[[i]] = c(cvlist1[[i]], cvlist2[[i]])
+  }
   return(cvlist)
 }
 
-cfhaz_ml_integral_est_cpp = function(init_parameters, time, event, IV, 
-                                  Covariates, Covariates2, D_status, stime, ml_fitting_surv,
-                                  ml_fitting_propensity,
-                                  max_iter = 20, tol = 1e-5,
-                                  contraction = 0.5, eta = 1e-4, nfolds = 10, seed = 5884419)
+cfhaz_ml_integral_est_cpp_strcf = function(init_parameters, time, event, IV, 
+                                     Covariates, Covariates2, D_status, stime, ml_fitting_surv,
+                                     ml_fitting_propensity,
+                                     max_iter = 20, tol = 1e-5,
+                                     contraction = 0.5, eta = 1e-4, nfolds = 10, seed = 5884419)
 {
   N = length(time)
   # b_Covariates = sapply(BasisFun, function(d) return(d(Covariates)))
   b_Covariates = Covariates
-  cflist = cf_group(nfolds = nfolds, datasize = N, seed = seed)
+  cflist = cf_group2(nfolds = nfolds, seed = seed, IV = IV)
   cf_IV_c = rep(0, N)
   cf_surv = matrix(0, nrow = N, ncol = length(stime))
   # ind_control = apply(D_status, 1, function(d) return(all(d == 0)))
@@ -42,7 +56,7 @@ cfhaz_ml_integral_est_cpp = function(init_parameters, time, event, IV,
                        IV = IV[-ind],
                        D_status = D_status[-ind, ],
                        stime = stime)
-    pred_df = data.frame(Covariates[ind, , drop = FALSE])
+    pred_df = data.frame(Covariates[ind, ])
     out = ml_fitting_surv(tmp_df_surv, predictx = pred_df)
     
     # dLam = diff(out$Lam[, 1])

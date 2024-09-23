@@ -5,7 +5,7 @@ sourceCpp("Function/integral/cf_integral_est.cpp")
 
 cf_group = function(nfolds, datasize, seed) {
   cvlist <- list()
-  set.seed(seed)
+  if(!is.null(seed)) set.seed(seed)
   n <- rep(1:nfolds,ceiling(datasize/nfolds))[1:datasize]    
   temp <- sample(n,datasize)  
   x <- 1:nfolds
@@ -27,6 +27,7 @@ cfhaz_integral_est_cpp = function(init_parameters, time, event, IV,
   cf_beta = matrix(0, nrow = N, ncol = dim(b_Covariates)[2], byrow = T)
   cf_dLam = matrix(0, nrow = N, ncol = length(stime), byrow = T)
   for (i in 1:length(cflist)) {
+    cat("Folder ", i, "\n")
     ind = cflist[[i]]
     tmp_df = data.frame(IV = IV[-ind], Covariates2[-ind, , drop = FALSE])
     mod = glm(IV ~ ., data = tmp_df, family = binomial(link = "logit"))

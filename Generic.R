@@ -429,17 +429,72 @@ DataFitting.ModelPar.DRIV.cf.hz.est = function(ModelPar){
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
                             IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
                             Covariates2 = ModelPar$dat$Covariates, 
-                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
+                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed, .homonyms = "first")
   }else{
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
                             IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
                             Covariates2 = ModelPar$Covariates2, 
-                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
+                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed, .homonyms = "first")
   }
   mod = easy_call(cfhaz_integral_est_cpp, args)
   return(list(Coef = mod$x,
               Var = mod$var,
               Convergence = mod$Convergence))
+}
+
+DataFitting.ModelPar.DRIV.cf.hz.est.ave = function(ModelPar){
+  # event = ModelPar$dat$T_D < ModelPar$dat$C & ModelPar$dat$T_D < ModelPar$max_t
+  event = ModelPar$dat$event
+  # T_D_c = ceiling(ModelPar$dat$T_D_c * ModelPar$Control$grid)/ModelPar$Control$grid
+  T_D_c = ModelPar$dat$T_D_c
+  if(is.null(ModelPar$dat$stime)){
+    stime = sort(T_D_c)
+    stime = unique(stime)
+  } else {
+    stime = ModelPar$dat$stime
+  }
+  k = length(stime)
+  if(is.null(ModelPar$dat$D_status)){
+    D_status = matrix(nrow = ModelPar$N, ncol = k)
+    for (i in 1:ModelPar$N) {
+      if(T_D_c[i] > ModelPar$dat$W[i]){
+        D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
+        D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
+      } else {
+        D_status[i, ] = ModelPar$dat$Z[i]
+      }
+    }
+  } else {
+    D_status = ModelPar$dat$D_status
+  }
+  
+  if(is.null(ModelPar$nfolds)) ModelPar$nfolds = 10
+  if(is.null(ModelPar$seed)) ModelPar$seed = 5884419
+  
+  if(!("Covariates2" %in% names(ModelPar))){
+    args = rlang::dots_list(seed = NULL, !!!ModelPar$Control, time = T_D_c, event = event,
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
+                            Covariates2 = ModelPar$dat$Covariates, 
+                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds,  .homonyms = "first")
+  }else{
+    args = rlang::dots_list(seed = NULL, !!!ModelPar$Control, time = T_D_c, event = event,
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
+                            Covariates2 = ModelPar$Covariates2, 
+                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, .homonyms = "first")
+  }
+  Coef = rep(0, ModelPar$Control$B)
+  Var = rep(0, ModelPar$Control$B)
+  Convergence = rep(FALSE, ModelPar$Control$B)
+  for (i in 1:ModelPar$Control$B) {
+    mod = easy_call(cfhaz_integral_est_cpp, args)
+    Coef[i] = mod$x
+    Var[i] = mod$var
+    Convergence[i] = mod$Convergence
+    cat("rep ", i, "\t", mod$x, "\t", mod$var, "\t", mod$Convergence, "\n")
+  }
+  return(list(Coef = mean(Coef),
+              Var = mean(Var),
+              Convergence = all(Convergence)))
 }
 
 
@@ -481,19 +536,81 @@ DataFitting.ModelPar.DRIV.cf.hz.ml.est = function(ModelPar){
                             ml_fitting_surv = ModelPar$ml_fitting_surv,
                             ml_fitting_propensity = ModelPar$ml_fitting_propensity,
                             Covariates2 = ModelPar$dat$Covariates, 
-                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
+                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed, .homonyms = "first")
   }else{
     args = rlang::dots_list(!!!ModelPar$Control, time = T_D_c, event = event,
                             IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
                             ml_fitting_surv = ModelPar$ml_fitting_surv,
                             ml_fitting_propensity = ModelPar$ml_fitting_propensity,
                             Covariates2 = ModelPar$Covariates2, 
-                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed)
+                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, seed = ModelPar$seed, .homonyms = "first")
   }
   mod = easy_call(cfhaz_ml_integral_est_cpp, args)
   return(list(Coef = mod$x,
               Var = mod$var,
               Convergence = mod$Convergence))
+}
+
+DataFitting.ModelPar.DRIV.cf.hz.ml.est.ave = function(ModelPar){
+  # event = ModelPar$dat$T_D < ModelPar$dat$C & ModelPar$dat$T_D < ModelPar$max_t
+  event = ModelPar$dat$event
+  # T_D_c = ceiling(ModelPar$dat$T_D_c * ModelPar$Control$grid)/ModelPar$Control$grid
+  T_D_c = ModelPar$dat$T_D_c
+  if(is.null(ModelPar$dat$stime)){
+    stime = sort(T_D_c)
+    stime = unique(stime)
+  } else {
+    stime = ModelPar$dat$stime
+  }
+  k = length(stime)
+  if(is.null(ModelPar$dat$D_status)){
+    D_status = matrix(nrow = ModelPar$N, ncol = k)
+    for (i in 1:ModelPar$N) {
+      if(T_D_c[i] > ModelPar$dat$W[i]){
+        D_status[i, which(stime <= ModelPar$dat$W[i])] = ModelPar$dat$Z[i]
+        D_status[i, which(stime > ModelPar$dat$W[i])] = 1 - ModelPar$dat$Z[i]
+      } else {
+        D_status[i, ] = ModelPar$dat$Z[i]
+      }
+    }
+  } else {
+    D_status = ModelPar$dat$D_status
+  }
+  
+  
+  if(is.null(ModelPar$ml_fitting_surv)) stop("ml_fitting_surv is not specified")
+  if(is.null(ModelPar$ml_fitting_propensity)) stop("ml_fitting_propensity is not specified")
+  if(is.null(ModelPar$nfolds)) ModelPar$nfolds = 10
+  # if(is.null(ModelPar$seed)) ModelPar$seed = 5884419
+  
+  if(!("Covariates2" %in% names(ModelPar))){
+    args = rlang::dots_list(seed = NULL, !!!ModelPar$Control, time = T_D_c, event = event,
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates,
+                            ml_fitting_surv = ModelPar$ml_fitting_surv,
+                            ml_fitting_propensity = ModelPar$ml_fitting_propensity,
+                            Covariates2 = ModelPar$dat$Covariates, 
+                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds,  .homonyms = "first")
+  }else{
+    args = rlang::dots_list(seed = NULL, !!!ModelPar$Control, time = T_D_c, event = event,
+                            IV = ModelPar$dat$Z, Covariates = ModelPar$dat$Covariates, 
+                            ml_fitting_surv = ModelPar$ml_fitting_surv,
+                            ml_fitting_propensity = ModelPar$ml_fitting_propensity,
+                            Covariates2 = ModelPar$Covariates2, 
+                            D_status = D_status, stime = stime, nfolds = ModelPar$nfolds, .homonyms = "first")
+  }
+  Coef = rep(0, ModelPar$Control$B)
+  Var = rep(0, ModelPar$Control$B)
+  Convergence = rep(FALSE, ModelPar$Control$B)
+  for (i in 1:ModelPar$Control$B) {
+    mod = easy_call(cfhaz_ml_integral_est_cpp_strcf, args)
+    Coef[i] = mod$x
+    Var[i] = mod$var
+    Convergence[i] = mod$Convergence
+    cat("rep ", i, "\t", mod$x, "\t", mod$var, "\t", mod$Convergence, "\n")
+  }
+  return(list(Coef = mean(Coef),
+              Var = mean(Var),
+              Convergence = all(Convergence)))
 }
 
 DataFitting.ModelPar.DRIV.cf.hz.ml.est.rateCal = function(ModelPar){
