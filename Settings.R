@@ -98,23 +98,24 @@ SurvTime_endogenous = function(N, p, Covariates, W, theta, alpha, Z, T){
 
 
 SurvTime_Nonlinear = function(N, p, Covariates, W, theta, Z){
-  # if(p != 2) stop("p must be 2")
+  if(p != 2) stop("p must be 2")
   L = Covariates
-  L = cbind(exp(L[, 1]/2))
-  L = ifelse(L[, 1] > exp(0.25), exp(3) - L[, 1], 0.25 * L[, 1])
+  L[, 1] = cbind(exp(L[, 1]/2))
+  L[, 1] = ifelse(L[, 1] > exp(0.25), exp(3) - L[, 1], 0.25 * L[, 1])
+  L[, 2] = Covariates[, 2]/(1 + exp(Covariates[, 1])) + 1
   Covariates = cbind(L, Covariates[, p+1])
   W_copy = W
   W[W <= 0] = Inf
   W_copy[W_copy <= 0] = 0
   T = rexp(N)
-  Covbeta = 2.1 + 0.274 * abs(Covariates[, 1]) + 0.137 * Covariates[, p+1]
-  T_0 = T/(0.25 + Covbeta)
-  T_D = T/(0.25 + theta*Z + Covbeta)
+  Covbeta = 0.1 * abs(Covariates[, 1]) + 0.1*Covariates[, 2] + 0.1 * Covariates[, p+1]
+  T_0 = T/(0.1 + Covbeta)
+  T_D = T/(0.1 + theta*Z + Covbeta)
   T_D_ind = T_D >= W
   if(any(T_D_ind)){
-    T_D[T_D_ind] = ((T_D*(0.25 + theta*Z + Covbeta)- 
+    T_D[T_D_ind] = ((T_D*(0.1 + theta*Z + Covbeta)- 
                        (theta * Z * W_copy - theta* (1-Z)*W_copy))/
-                      (0.25 + theta*(1-Z) + Covbeta))[T_D_ind]
+                      (0.1 + theta*(1-Z) + Covbeta))[T_D_ind]
   }
   return(list(T_D = as.vector(T_D),
               T_0 = T_0))
@@ -134,6 +135,7 @@ SwitchingTime_endogenous = function(N, p, Covariates, Z, beta, diffcoef, T, alph
   T_0 = T/(0.25 + Covariates %*% alpha)
   W = ifelse(as.logical(Z), rexp(N)/(exp(-T_0)*0.5*(0.1 + diffcoef*Z + Covariates %*% beta)),
              rexp(N)/(exp(-T_0)*0.5*(0.1 - diffcoef*(1 - Z) + Covariates %*% beta)))
+  return(W)
 }
 
 

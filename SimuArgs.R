@@ -2,8 +2,11 @@ source("Settings.R")
 library(LongCART)
 library(randomForestSRC)
 
+################################################################################
+#####################          Scenario 1        ###############################
+################################################################################
 
-SimuArg = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 3,
+SimuArg = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 5,
                       theta = 0.1, 
                       unmeasured_Confounding = unmeasured_Confounding,
                       InitCovariates = InitCovariates,
@@ -11,12 +14,158 @@ SimuArg = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogeno
                       SurvTime = SurvTime,
                       SwitchingTime = SwitchingTime,
                       CensoringTime = CensoringTime,
-                      Control = list(json_save = T),
+                      Control = list(json_save = TRUE),
                       gamma = rep(c(1, -1), length.out = 2),
                       alpha = rep(0.25, 3),
                       beta = rep(0.25, 3),
-                      diffcoef = 0.5)
+                      diffcoef = 0.5,
+                      censoring_par = c(0.01, 0.01),
+                      censoring_intercept = 0.1)
 # DataGenerating(SimuArg)
+
+
+SimuArg2 = New_SimuArg(nrep = 1000, N = 3200, p = 2, p_U = 1, Scenario = "exogenous", max_t = 5,
+                      theta = 0.1, 
+                      unmeasured_Confounding = unmeasured_Confounding,
+                      InitCovariates = InitCovariates,
+                      InitAssignment = InitAssignment,
+                      SurvTime = SurvTime,
+                      SwitchingTime = SwitchingTime,
+                      CensoringTime = CensoringTime,
+                      Control = list(json_save = TRUE),
+                      gamma = rep(c(1, -1), length.out = 2),
+                      alpha = rep(0.25, 3),
+                      beta = rep(0.25, 3),
+                      diffcoef = 0.5,
+                      censoring_par = c(0.01, 0.01),
+                      censoring_intercept = 0.1)
+# DataGenerating(SimuArg2)
+
+
+SimuArg_prop = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 5,
+                           theta = 0.1, 
+                           unmeasured_Confounding = unmeasured_Confounding,
+                           InitCovariates = InitCovariates,
+                           InitAssignment = InitAssignment_Nonlinear,
+                           SurvTime = SurvTime,
+                           SwitchingTime = SwitchingTime,
+                           CensoringTime = CensoringTime,
+                           Control = list(json_save = TRUE,
+                                          Annotation = "prop"),
+                           gamma = rep(c(1, -1), length.out = 2),
+                           alpha = rep(0.25, 3),
+                           beta = rep(0.25, 3),
+                           diffcoef = 0.5,
+                           censoring_par = c(0.01, 0.01),
+                           censoring_intercept = 0.1)
+# DataGenerating(SimuArg_prop)
+
+
+SimuArg2_prop = New_SimuArg(nrep = 1000, N = 3200, p = 2, p_U = 1, Scenario = "exogenous", max_t = 5,
+                           theta = 0.1, 
+                           unmeasured_Confounding = unmeasured_Confounding,
+                           InitCovariates = InitCovariates,
+                           InitAssignment = InitAssignment_Nonlinear,
+                           SurvTime = SurvTime,
+                           SwitchingTime = SwitchingTime,
+                           CensoringTime = CensoringTime,
+                           Control = list(json_save = TRUE,
+                                          Annotation = "prop"),
+                           gamma = rep(c(1, -1), length.out = 2),
+                           alpha = rep(0.25, 3),
+                           beta = rep(0.25, 3),
+                           diffcoef = 0.5,
+                           censoring_par = c(0.01, 0.01),
+                           censoring_intercept = 0.1)
+# DataGenerating(SimuArg2_prop)
+
+
+
+
+
+SimuArg_Surv = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 5,
+                           theta = 0.1, 
+                           unmeasured_Confounding = unmeasured_Confounding,
+                           InitCovariates = InitCovariates,
+                           InitAssignment = InitAssignment,
+                           SurvTime = SurvTime_Nonlinear,
+                           SwitchingTime = SwitchingTime,
+                           CensoringTime = CensoringTime,
+                           Control = list(json_save = TRUE,
+                                          Annotation = "surv"),
+                           gamma = rep(c(1, -1), length.out = 2),
+                           alpha = rep(0.25, 3),
+                           beta = rep(0.25, 3),
+                           diffcoef = 0.5,
+                           censoring_par = c(0.01, 0.01),
+                           censoring_intercept = 0.1)
+# DataGenerating(SimuArg_Surv)
+
+
+SimuArg2_Surv = New_SimuArg(nrep = 1000, N = 3200, p = 2, p_U = 1, Scenario = "exogenous", max_t = 5,
+                           theta = 0.1, 
+                           unmeasured_Confounding = unmeasured_Confounding,
+                           InitCovariates = InitCovariates,
+                           InitAssignment = InitAssignment,
+                           SurvTime = SurvTime_Nonlinear,
+                           SwitchingTime = SwitchingTime,
+                           CensoringTime = CensoringTime,
+                           Control = list(json_save = TRUE,
+                                          Annotation = "surv"),
+                           gamma = rep(c(1, -1), length.out = 2),
+                           alpha = rep(0.25, 3),
+                           beta = rep(0.25, 3),
+                           diffcoef = 0.5,
+                           censoring_par = c(0.01, 0.01),
+                           censoring_intercept = 0.1)
+# DataGenerating(SimuArg2_Surv)
+
+
+
+
+SimuArg_both = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 5,
+                           theta = 0.1, 
+                           unmeasured_Confounding = unmeasured_Confounding,
+                           InitCovariates = InitCovariates,
+                           InitAssignment = InitAssignment_Nonlinear,
+                           SurvTime = SurvTime_Nonlinear,
+                           SwitchingTime = SwitchingTime,
+                           CensoringTime = CensoringTime,
+                           Control = list(json_save = TRUE,
+                                          Annotation = "both"),
+                           gamma = rep(c(1, -1), length.out = 2),
+                           alpha = rep(0.25, 3),
+                           beta = rep(0.25, 3),
+                           diffcoef = 0.5,
+                           censoring_par = c(0.01, 0.01),
+                           censoring_intercept = 0.1)
+# DataGenerating(SimuArg_both)
+
+
+SimuArg2_both = New_SimuArg(nrep = 1000, N = 3200, p = 2, p_U = 1, Scenario = "exogenous", max_t = 5,
+                           theta = 0.1, 
+                           unmeasured_Confounding = unmeasured_Confounding,
+                           InitCovariates = InitCovariates,
+                           InitAssignment = InitAssignment_Nonlinear,
+                           SurvTime = SurvTime_Nonlinear,
+                           SwitchingTime = SwitchingTime,
+                           CensoringTime = CensoringTime,
+                           Control = list(json_save = TRUE,
+                                          Annotation = "both"),
+                           gamma = rep(c(1, -1), length.out = 2),
+                           alpha = rep(0.25, 3),
+                           beta = rep(0.25, 3),
+                           diffcoef = 0.5,
+                           censoring_par = c(0.01, 0.01),
+                           censoring_intercept = 0.1)
+# DataGenerating(SimuArg2_both)
+
+
+
+
+################################################################################
+#####################          Scenario 2        ###############################
+################################################################################
 
 
 SimuArg_dep = New_SimuArg(nrep = 1000, N = 1600, p = 2, p_U = 1, Scenario = "exogenous", max_t = 3,
